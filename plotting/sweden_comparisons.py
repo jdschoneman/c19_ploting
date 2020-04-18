@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Compare Sweden to NY state and Denmark by growth rate of deaths starting from
-first 10 deaths.
+Compare Sweden to various US states
 
 IHME data per IHME:
     https://covid19.healthdata.org/united-states-of-america
@@ -30,172 +29,262 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 from datetime import date
 
 
-from read_data import get_data_c19, format_date_c19, get_data_ihme, format_date_ihme, get_data_ctrack
+from read_data import get_data_c19, format_date_c19, get_data_ctrack
 
-# Populations (millions)
-ny_pop = 19.45
-sweden_pop = 10.23
-denmark_pop = 5.6
 
-# Read IHME projections
-model_fname = r'..\data\ihme\2020_04_12.02\Hospitalization_all_locs.csv'
-project_date = '13 April'
-all_ihme = get_data_ihme(model_fname)
-dates_ihme = [format_date_ihme(s) for s in all_ihme['Sweden']['date']]
 
-sweden_ihme_death = all_ihme['Sweden']['totdea_mean']
-denmark_ihme_death = all_ihme['Denmark']['totdea_mean']
-ny_ihme_death = all_ihme['New York']['totdea_mean']
+# Class-based method for reading/tracking/formatting data associated with a country
+class country_data:
+    
+    def __init__(self, name, population, datafile):
+        """
+        Create country and load data per COVID-19 Tracker. Enter
+        population in millions.
+        """
+        
+        self.name = name
+        self.population = population
+        self.datafile = datafile
+        self.death, dates = get_data_c19(name, datafile)
+        self.dates = [format_date_c19(s) for s in dates]
+        
+        self.n_death = None
+        self.trim_death = None
+        self.trim_dates = None
+        self.trim_days = None
+        
+    def trim_to_first(self, n_death):
+        """
+        Trims dataset to start from day with first N deaths. Saves results
+        to trim_death, trim_dates, and trim_days properties.
+        """
+        
+        self.n_death = n_death
+        try:
+            start_ind = np.where(self.death >= n_death)[0][0]
+        except IndexError:
+            start_ind = -1
+        self.trim_death = self.death[start_ind:]
+        self.trim_dates = self.dates[start_ind:]
+        self.trim_days = np.arange(len(self.trim_death))
+        
+    def plot_trim(self, ax = None, dark_lines = False, label = False, **kwargs):
+        """
+        Plots trimmed and normalized (per million) on an optionally supplied
+        axis.
+        """
+        
+        if ax is None:
+            fig, ax = plt.subplots(1, 1)
+            
+        if label is False:
+#            display_date = '%s-%s' % (self.trim_dates[0][5], self.trim_dates[0][6:])
+            label = '%s [Pop %.1fM]' % (self.name, self.population)
+        g = ax.plot(self.trim_days, self.trim_death/self.population, 
+                label = label, **kwargs)
+        
+        if dark_lines:
+            color = colors.to_rgb(g[0].get_color())
+            print(color)
+            g[0].set_color([0.5*c for c in color])
+            g[0].set_markerfacecolor(color)
+            
+    def plot_dtrim(self, ax = None, dark_lines = False, label = False, **kwargs):
+        """
+        Plots trimmed and normalized new deaths per day (per million) on an 
+        optionally supplied axis.
+        """
+        
+        if ax is None:
+            fig, ax = plt.subplots(1, 1)
+            
+        if label is False:
+            label = '%s [%s]' % (self.name, self.trim_dates[0])
+        g = ax.plot(self.trim_days, np.diff(self.trim_death, prepend = 0)/self.population, 
+                label = label, **kwargs)
+        
+        if dark_lines:
+            color = colors.to_rgb(g[0].get_color())
+            print(color)
+            g[0].set_color([0.5*c for c in color])
+            g[0].set_markerfacecolor(color)
+        
+class state_data(country_data):
 
-# Load data for Sweden and denmark
+    def __init__(self, name, population, datafile):
+        """
+        Create country and load data per COVID-19 Tracker. Enter
+        population in millions.
+        """
+        
+        self.name = name
+        self.population = population
+        self.datafile = datafile
+        data = get_data_ctrack(name, datafile)
+        self.death = data['death']
+        self.dates = data['date']
+        
+        self.n_death = None
+        self.trim_death = None
+        self.trim_dates = None
+        self.trim_days = None
+    
+    
+        
+        
+country_pops = {'Denmark': 5.6,
+                'Norway': 5.4,
+                'Netherlands': 17.3,
+                'United Kingdom': 66.7,
+                'France': 67.,
+                'Italy': 60.4,
+                'Spain': 47.,
+                'Sweden': 10.2,
+                'Germany': 83.02}
+
+state_pops = {'CA': 39.51,
+              'TX': 28.99,
+              'FL': 21.48,
+              'NY': 20.2,
+              'PA': 12.8,
+              'IL': 12.67,
+              'OH': 11.69,
+              'GA': 10.62,
+              'NC': 10.49,
+              'MI': 9.9,
+              'NJ': 8.88,
+              'VA': 8.54,
+              'WA': 7.61,
+              'AZ': 7.28,
+              'MA': 6.95,
+              'TN': 6.83,
+              'IN': 6.72,
+              'MO': 6.14,
+              'MD': 6.05,
+              'WI': 5.82,
+              'CO': 5.76,
+              'MN': 5.64,
+              'SC': 5.45,
+              'AL': 4.90,
+              'LA': 4.65,
+              'KY': 4.47,
+              'OR': 4.22,
+              'OK': 3.96,
+              'CT': 3.57,
+              'UT': 3.2,
+              'IA': 3.16,
+              'NV': 3.08,
+              'AR': 3.02,
+              'MS': 2.98,
+              'KS': 2.91,
+              'NM': 2.10,
+              'NE': 1.93,
+              'WV': 1.76,
+              'ID': 1.79,
+              'HI': 1.42,
+              'NH': 1.36,
+              'ME': 1.34,
+              'MT': 1.01,
+              'RI': 1.06,
+              'DE': 0.97,
+              'SD': 0.88,
+              'ND': 0.76,
+              'AK': 0.73,
+              'DC': 0.71,
+              'VT': 0.62,
+              'WY': 0.78}
+
+
+# Load data for Sweden
 datapath = r'..\data\COVID-19\csse_covid_19_data\csse_covid_19_time_series'
 dataname = 'time_series_covid19_deaths_global.csv'
-data_filename = os.path.join(datapath, dataname)
-country_data_date = '14 April'
-sweden_c19, dates_c19 = get_data_c19('Sweden', data_filename)
-denmark_c19, dates_c19 = get_data_c19('Denmark', data_filename)
-dates_c19 = [format_date_c19(s) for s in dates_c19]
-
-# Load data for NY state
-data_filename = r'..\data\covid19_tracker\states-daily_20200414.csv'
-state_data_date = '14 April'
-data_ctrack = get_data_ctrack('NY', data_filename)
-ny_ctrack = data_ctrack['death']
-dates_ctrack = data_ctrack['date']
-
-
-#%% Determine starting date for each country/state using first to 10 deaths
-# from data
-
+country_filename = os.path.join(datapath, dataname)
+country_data_date = '17 April'
+state_filename = r'..\data\covid19_tracker\states-daily_20200417.csv'
+state_data_date = '17 April'
 n_death = 10
 
-start_ind_sweden = np.where(sweden_c19 >= n_death)[0][0]
-start_ind_denmark = np.where(denmark_c19 >= n_death)[0][0]
-start_ind_ny = np.where(ny_ctrack >= n_death)[0][0]
 
-start_date_sweden = dates_c19[start_ind_sweden]
-start_date_denmark = dates_c19[start_ind_denmark]
-start_date_ny = dates_ctrack[start_ind_ny]
-
-n_days_sweden = len(dates_c19[start_ind_sweden:])
-n_days_denmark = len(dates_c19[start_ind_denmark:])
-n_days_ny = len(dates_ctrack[start_ind_ny:])
-
-start_ihme_sweden = list(dates_ihme).index(start_date_sweden)
-start_ihme_denmark = list(dates_ihme).index(start_date_denmark)
-start_ihme_ny = list(dates_ihme).index(start_date_ny)
-
-
-#%% Plot deaths for Sweden vs NY and Sweden vs Denmark
-
-impath = r'..\images\sweden_ny_denmark.png'
-
-
-fig, ax = plt.subplots(2, 2, figsize = (12, 6))
-ax = ax.flatten()
-
-gray = 0.3*np.array([1, 1, 1])
-lightblue = [0.3, 0.3, 0.8]
-darkblue = [0.2, 0.2, 0.6]
-darkred = [0.6, 0.2, 0.2]
-lightred = [0.8, 0.4, 0.4]
-
-### New York vs Sweden; All ####
-ax[0].plot(np.arange(n_days_sweden), sweden_c19[start_ind_sweden:]/sweden_pop,
-          'o', label = 'Sweden; Reported',
-            color = 'k', markerfacecolor = gray)
-ax[0].plot(np.arange(n_days_ny), ny_ctrack[start_ind_ny:]/ny_pop,
-          'o', label = 'New York State; Reported',
-            color = darkred, markerfacecolor = lightred)
-
-
-### New York vs Sweden; NEW ####
-ax[2].plot(np.arange(n_days_sweden), np.diff(sweden_c19[start_ind_sweden:], prepend = 0)/sweden_pop,
-          'o', label = 'Sweden; Reported',
-            color = 'k', markerfacecolor = gray)
-ax[2].plot(np.arange(n_days_ny), np.diff(ny_ctrack[start_ind_ny:], prepend = 0)/ny_pop,
-          'o', label = 'New York State; Reported',
-            color = darkred, markerfacecolor = lightred)
-
-### Denmak vs Sweden; All ####
-ax[1].plot(np.arange(n_days_sweden), sweden_c19[start_ind_sweden:]/sweden_pop,
-          'o', label = 'Sweden; Reported',
-            color = 'k', markerfacecolor = gray)
-ax[1].plot(np.arange(n_days_denmark), denmark_c19[start_ind_denmark:]/denmark_pop,
-          'o', label = 'Denmark; Reported',
-            color = darkblue, markerfacecolor = lightblue)
-
-
-### New York vs Sweden; NEW ####
-ax[3].plot(np.arange(n_days_sweden), np.diff(sweden_c19[start_ind_sweden:], prepend = 0)/sweden_pop,
-          'o', label = 'Sweden; Reported',
-            color = 'k', markerfacecolor = gray)
-ax[3].plot(np.arange(n_days_denmark), np.diff(denmark_c19[start_ind_denmark:], prepend = 0)/denmark_pop,
-          'o', label = 'Denmark; Reported',
-            color = darkblue, markerfacecolor = lightblue)
-
-
-# Grab axis limits
-#xl = ax[0].get_xlim()
-#yl = ax[0].get_ylim()
-#ax[0].plot(np.arange(len(dates_ihme[start_ihme_sweden:])), 
-#           sweden_ihme_death[start_ihme_sweden:]/sweden_pop,
-#          '-', label = 'Sweden; Projected',
-#            color = 'k')
-##
-#
-#
-#ax[0].set_xlim(xl)
-#ax[0].set_ylim(yl)
-
-#ax[0].plot(np.arange(n_days_ny), ny_ctrack[start_ind_ny:]/ny_pop,
-#          'o', label = 'New York State; Reported',
-#            color = darkred, markerfacecolor = lightred)
+sweden = country_data('Sweden', country_pops['Sweden'], country_filename)
+sweden.trim_to_first(n_death)
 
 
 
-#ax[0].plot(dates_ihme, death_ihme_m, 'k-', label = 'Sweden; Projected')
+
+# Make lists of countries, populations, and plot styles
+countries = ['Denmark', 'United Kingdom', 'Spain', 'Italy', 'Germany', 'Sweden']
+highlight_countries = {'Denmark': {'color': 'r', 'linestyle': '-'},
+                    'United Kingdom': {'color': 'b', 'linestyle': '-'},
+                    'Spain': {'color': 'k', 'linestyle': '-'},
+                    'Italy': {'color': 'r', 'linestyle': '--'},
+                    'Germany': {'color': 'b', 'linestyle': '--'},
+                    'Sweden': {'color': 'k', 'linestyle': '--'}}
+
+# States to plot and their styles
+highlight_states = {'NY': {'color': 'r', 'linestyle': '-'},
+                    'WA': {'color': 'b', 'linestyle': '-'},
+                    'AL': {'color': 'k', 'linestyle': '-'},
+                    'WI': {'color': 'r', 'linestyle': '--'},
+                    'TX': {'color': 'b', 'linestyle': '--'},
+                    'FL': {'color': 'k', 'linestyle': '--'}}
 
 
+state_objs = list()
+for state in highlight_states.keys():
+    cdata = state_data(state, state_pops[state], state_filename)
+    cdata.trim_to_first(n_death)
+    state_objs.append(cdata)
+state_obj_dict = {s.name: s for s in state_objs}
+
+
+country_objs = list()
+for country in highlight_countries.keys():
+    cdata = country_data(country, country_pops[country], country_filename)
+    cdata.trim_to_first(n_death)
+    country_objs.append(cdata)
+country_obj_dict = {s.name: s for s in country_objs}
+
+#%%
+
+xl = [0, 55]
+yl = [0, 650]
+
+
+fig, ax = plt.subplots(1, 2, figsize = (12, 6))
+for cdata in state_objs:
+    cdata.plot_trim(ax[0], linewidth = 2, **highlight_states[cdata.name])
 ax[0].legend()
+
+
+for cdata in country_objs:
+    cdata.plot_trim(ax[1], **highlight_countries[cdata.name])
 ax[1].legend()
-ax[0].set_ylabel('Total Deaths Per Million', fontsize = 12, fontweight = 'bold')
-ax[2].set_ylabel('New Deaths Per Million', fontsize = 12, fontweight = 'bold')
-ax[2].set_xlabel('Days Since 10 Deaths (Absolute)', fontsize = 12, fontweight = 'bold')
-ax[3].set_xlabel('Days Since 10 Deaths (Absolute)', fontsize = 12, fontweight = 'bold')
 
-title1 = ('NY [Reached 10 Deaths %s]\nvs\nSweden [Reached 10 Deaths %s]' 
-          % (start_date_ny, start_date_sweden))
-ax[0].set_title(title1, fontsize = 12, fontweight = 'bold')
 
-title2 = ('Denmark [Reached 10 Deaths %s]\nvs\nSweden [Reached 10 Deaths %s]' 
-          % (start_date_denmark, start_date_sweden))
-ax[1].set_title(title2, fontsize = 12, fontweight = 'bold')
-plt.tight_layout()
-plt.savefig(impath, bbox_inches = 'tight')
-#ax[1].set_title('Deaths', fontsize = 12, fontweight = 'bold')
+ax[0].set_xlim(xl)
+ax[1].set_xlim(xl)
+ax[0].set_ylim(yl)
+ax[1].set_ylim(yl)
+ax[0].grid()
+ax[1].grid()
 
+ax[0].set_ylabel('Covid-19 Attributed Deaths Per Million', fontsize = 12, fontweight = 'bold')
+ax[0].set_xlabel('Days Since 10 Deaths', fontsize = 12, fontweight = 'bold')
+ax[1].set_xlabel('Days Since 10 Deaths', fontsize = 12, fontweight = 'bold')
+plt.suptitle('Population-Adjusted Covid-19 Deaths vs. Days Since 10 Deaths\n' + 
+             'US Data per Covid Tracking Project [%s]; European Data per COVID-19 Github [%s]' % (state_data_date, country_data_date),
+             fontsize = 12, fontweight = 'bold')
+
+figname = '../images/pop_comparisons_us%s_europe%s.png' % (state_data_date, country_data_date)
+plt.savefig(figname, bbox_inches = 'tight')
+#ax.set_title('Sweden vs. US States; Population-Adjusted Fatalities [State Data %s; Swedish Data %s]\n%i of 50 States Have Exceed %i Deaths' 
+#             % (state_data_date, country_data_date, states_over_n, n_death),
+#             fontsize = 13,
+#             fontweight = 'bold')
 #
-#ax[3].plot(dates, ddeath, 'o',
-#           color = darkblue, markerfacecolor = lightblue)
-#ax[3].plot(dates_ihme, ddeath_ihme_m, 'k-')
-#ax[3].plot(dates_ihme, ddeath_ihme_l, 'r--')
-#ax[3].plot(dates_ihme, ddeath_ihme_u, 'r--')
-#ax[3].set_xlim(0, date_inds_ihme[-1])
-#ax[3].set_xticks(xticks)
-#ax[3].set_xticklabels(xticklabels)
-#ax[3].set_ylabel('New Deaths', fontsize = 12, fontweight = 'bold')
-#ax[3].set_xlabel('Date', fontsize = 12, fontweight = 'bold')
-#
-## plt.tight_layout()
-#fig.suptitle('%s: Reported Data [%s] vs IHME Projections [%s]' % 
-#             (country, data_date, project_date), fontsize = 14, fontweight = 'bold')
-#
-#plt.savefig(os.path.join(impath, imname), bbox_inches = 'tight')
-#
-#
-#
+#plt.tight_layout()
 

@@ -36,10 +36,10 @@ def intfun(s):
         return 0
 
 # Select states and set data dates for display    
-#state = 'NY'
-#state_long = 'New York'
-state = 'CA'
-state_long = 'California'
+state = 'NY'
+state_long = 'New York'
+#state = 'CA'
+#state_long = 'California'
 #state = 'WI'
 #state_long = 'Wisconsin'
 #state = 'AL'
@@ -52,8 +52,8 @@ state_long = 'California'
 #state_long = 'Michigan'
 #state = 'WA'
 #state_long = 'Washington'
-state = 'DC'
-state_long = 'District of Columbia'
+#state = 'DC'
+#state_long = 'District of Columbia'
 #state = 'NJ'
 #state_long = 'New Jersey'
 #state = 'OK'
@@ -63,8 +63,8 @@ state_long = 'District of Columbia'
 #state_long = 'US'
 
 # Set files which we're loading from and set data dates for display
-data_filename = r'..\data\covid19_tracker\states-daily_20200414.csv'
-data_date = '14 April'
+data_filename = r'..\data\covid19_tracker\states-daily_20200417.csv'
+data_date = '17 April'
 
 #model_fname = r'..\data\ihme\2020_03_31.1\Hospitalization_all_locs.csv'
 #project_date = '31 March'
