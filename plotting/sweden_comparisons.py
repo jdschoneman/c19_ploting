@@ -144,7 +144,8 @@ country_pops = {'Denmark': 5.6,
                 'Italy': 60.4,
                 'Spain': 47.,
                 'Sweden': 10.2,
-                'Germany': 83.02}
+                'Germany': 83.02,
+                'Finland': 5.52}
 
 state_pops = {'CA': 39.51,
               'TX': 28.99,
@@ -203,9 +204,9 @@ state_pops = {'CA': 39.51,
 datapath = r'..\data\COVID-19\csse_covid_19_data\csse_covid_19_time_series'
 dataname = 'time_series_covid19_deaths_global.csv'
 country_filename = os.path.join(datapath, dataname)
-country_data_date = '17 April'
-state_filename = r'..\data\covid19_tracker\states-daily_20200417.csv'
-state_data_date = '17 April'
+state_filename = r'..\data\covid19_tracker\states-daily_20200424.csv'
+state_data_date = '24 April'
+country_data_date = '24 April'
 n_death = 10
 
 
@@ -221,7 +222,7 @@ highlight_countries = {'Denmark': {'color': 'r', 'linestyle': '-'},
                     'United Kingdom': {'color': 'b', 'linestyle': '-'},
                     'Spain': {'color': 'k', 'linestyle': '-'},
                     'Italy': {'color': 'r', 'linestyle': '--'},
-                    'Germany': {'color': 'b', 'linestyle': '--'},
+                    'Netherlands': {'color': 'b', 'linestyle': '--'},
                     'Sweden': {'color': 'k', 'linestyle': '--'}}
 
 # States to plot and their styles
@@ -229,7 +230,7 @@ highlight_states = {'NY': {'color': 'r', 'linestyle': '-'},
                     'WA': {'color': 'b', 'linestyle': '-'},
                     'AL': {'color': 'k', 'linestyle': '-'},
                     'WI': {'color': 'r', 'linestyle': '--'},
-                    'TX': {'color': 'b', 'linestyle': '--'},
+                    'GA': {'color': 'b', 'linestyle': '--'},
                     'FL': {'color': 'k', 'linestyle': '--'}}
 
 
@@ -251,7 +252,7 @@ country_obj_dict = {s.name: s for s in country_objs}
 #%%
 
 xl = [0, 55]
-yl = [0, 650]
+yl = [0, 800]
 
 
 fig, ax = plt.subplots(1, 2, figsize = (12, 6))

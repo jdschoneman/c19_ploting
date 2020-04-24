@@ -24,6 +24,7 @@ from scipy.integrate import solve_ivp
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 from datetime import date
+from scipy.signal import medfilt
 
 from read_data import get_data_ctrack, get_data_ihme, format_date_ihme
 
@@ -38,16 +39,22 @@ def intfun(s):
 # Select states and set data dates for display    
 state = 'NY'
 state_long = 'New York'
+state = 'GA'
+state_long = 'Georgia'
+#state = 'KY'
+#state_long = 'Kentucky'
 #state = 'CA'
 #state_long = 'California'
-#state = 'WI'
-#state_long = 'Wisconsin'
+state = 'WI'
+state_long = 'Wisconsin'
+ylpct = [0., 15.]
 #state = 'AL'
 #state_long = 'Alabama'
 #state = 'OR'
 #state_long = 'Oregon'
 #state = 'FL'
 #state_long = 'Florida'
+#ylpct = [0.,25.]
 #state = 'MI'
 #state_long = 'Michigan'
 #state = 'WA'
@@ -58,20 +65,26 @@ state_long = 'New York'
 #state_long = 'New Jersey'
 #state = 'OK'
 #state_long = 'Oklahoma'
+#state = 'SD'
+#state_long = 'South Dakota'
 # TODO: Have to add all state data together for the covid tracker data
 #state = 'US'
 #state_long = 'US'
 
+#ylpct = [0., 100.]
+
 # Set files which we're loading from and set data dates for display
-data_filename = r'..\data\covid19_tracker\states-daily_20200417.csv'
-data_date = '17 April'
+data_filename = r'..\data\covid19_tracker\states-daily_20200424.csv'
+data_date = '24 April'
 
 #model_fname = r'..\data\ihme\2020_03_31.1\Hospitalization_all_locs.csv'
 #project_date = '31 March'
 
+#model_fname = r'..\data\ihme\2020_04_12.02\Hospitalization_all_locs.csv'
+#project_date = '13 April'
 
-model_fname = r'..\data\ihme\2020_04_12.02\Hospitalization_all_locs.csv'
-project_date = '13 April'
+model_fname = r'..\data\ihme\2020_04_16.05\Hospitalization_all_locs.csv'
+project_date = '17 April'
 
 # When to stop the plotting
 stop_date = '20200430'
@@ -135,7 +148,7 @@ xticklabels = ['%s/%s' % (s[-3], s[-2:]) for s in dates_ihme[::4]]
 
 
 if plot_testing:
-    fig, ax = plt.subplots(1, 2, figsize = (12, 5))
+    fig, ax = plt.subplots(1, 3, figsize = (17, 5))
     gray = 0.3*np.array([1, 1, 1])
     lightblue = [0.3, 0.3, 0.8]
     darkblue = [0.2, 0.2, 0.6]
@@ -144,37 +157,61 @@ if plot_testing:
     
     
     dtotal = dpos + dneg
+    avg_7 = medfilt(dtotal, 7)
     ax[0].plot(dates, dtotal, 'o', label = 'Total Tests', 
-              color = darkblue, markerfacecolor = lightblue,)
-    ax[0].plot(dates, dpos, 'o', label = 'Positive Tests',
-                color = red, markerfacecolor = lightred)
+              color = darkblue, markerfacecolor = lightblue)
+    ax[0].plot(dates, avg_7, 'k--', label = '7 Day Moving Average')
+
     ax[0].set_xticks(xticks)
     ax[0].set_xticklabels(xticklabels)
-    
+    ax[0].set_ylabel('Number of Tests', fontsize = 12, fontweight = 'bold')
     ax[0].set_xlabel('Date', fontsize = 12, fontweight = 'bold')
-    ax[0].set_ylabel('Number of Tests/Positives', fontsize = 12, fontweight = 'bold')
     
+    ax[1].plot(dates, dpos, 'o', label = 'Positive Tests',
+                color = red, markerfacecolor = lightred)
     
-    ax[1].plot(dates, 100*dpos/dtotal, 'o', color = 'k',
-              markerfacecolor = gray)
+    avg_3 = medfilt(dpos, 3)
+    avg_7 = medfilt(dpos, 7)
+#    ax[1].plot(dates, avg_3, 'b--', label = '3 Day Moving Average')
+    ax[1].plot(dates, avg_7, 'k--', label = '7 Day Moving Average')
+    
     ax[1].set_xticks(xticks)
     ax[1].set_xticklabels(xticklabels)
-    ax[1].set_xlabel('Date', fontweight = 'bold', fontsize = 12)
-    ax[1].set_ylabel('Percentage of Positive Tests', 
+    ax[1].set_ylabel('Number of Positives', fontsize = 12, fontweight = 'bold')
+    ax[1].set_xlabel('Date', fontsize = 12, fontweight = 'bold')
+
+    avg_7 = medfilt(100*dpos/dtotal, 7)
+    ax[2].plot(dates, avg_7, 'k--', label = '7 Day Moving Average')
+    ax[2].plot(dates, 100*dpos/dtotal, 'o', color = 'k',
+              markerfacecolor = gray)
+    ax[2].set_xticks(xticks)
+    ax[2].set_xticklabels(xticklabels)
+    ax[2].set_xlabel('Date', fontweight = 'bold', fontsize = 12)
+    ax[2].set_ylabel('Percentage of Positive Tests', 
                      fontweight = 'bold', fontsize = 12)
     
-    ax[0].set_title('All Tests/Positive Tests', fontsize = 12, fontweight = 'bold')
-    ax[1].set_title('Percentage of Tests Positive', fontsize = 12, fontweight = 'bold')
+    ax[0].set_title('All Tests', fontsize = 12, fontweight = 'bold')
+    ax[1].set_title('Positive Tests', fontsize = 12, fontweight = 'bold')
+    ax[2].set_title('Percentage of Tests Positive', fontsize = 12, fontweight = 'bold')
     
     yl0 = ax[0].get_ylim()
     yl1 = ax[1].get_ylim()
+    yl2 = ax[2].get_ylim()
     
     ax[0].set_ylim([-5, yl0[1]])
     ax[0].set_xlim([0, len(dates)])
-    ax[0].legend()
     
     ax[1].set_ylim([-5, yl1[1]])
     ax[1].set_xlim([0, len(dates)])
+    
+    ax[1].legend()
+    if ylpct is None:
+        ax[2].set_ylim([-5, yl2[1]])
+    else:
+       ax[2].set_ylim(ylpct) 
+    ax[2].set_xlim([0, len(dates)])
+    
+    
     
     fig.suptitle('%s: All Tests, Positive Tests, and Positive Test Percentages' % 
              state_long, fontsize = 14, fontweight = 'bold')
