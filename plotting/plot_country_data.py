@@ -33,10 +33,10 @@ from read_data import get_data_c19, format_date_c19, get_data_ihme, format_date_
 # Select states and set data dates for display    
 #country = 'Sweden'
 
-country = 'United Kingdom'
+#country = 'United Kingdom'
 #country = 'Germany'
 #country = 'Norway'
-country = 'Italy'
+#country = 'Italy'
 #country = 'Spain'
 country = 'US'
 
@@ -45,7 +45,7 @@ country = 'US'
 datapath = r'..\data\COVID-19\csse_covid_19_data\csse_covid_19_time_series'
 dataname = 'time_series_covid19_deaths_global.csv'
 data_filename = os.path.join(datapath, dataname)
-data_date = '19 April'
+data_date = '29 April'
 
 # model_fname = r'..\data\ihme-covid19_20200401\2020_03_31.1\Hospitalization_all_locs.csv'
 #model_fname = r'..\data\ihme-covid19_20200405\2020_04_05.05.us\Hospitalization_all_locs.csv'

@@ -37,19 +37,21 @@ def intfun(s):
         return 0
 
 # Select states and set data dates for display    
-state = 'NY'
-state_long = 'New York'
-state = 'GA'
-state_long = 'Georgia'
+#state = 'NY'
+#state_long = 'New York'
+#state = 'GA'
+#state_long = 'Georgia'
 #state = 'KY'
 #state_long = 'Kentucky'
 #state = 'CA'
 #state_long = 'California'
-state = 'WI'
-state_long = 'Wisconsin'
-ylpct = [0., 15.]
-#state = 'AL'
-#state_long = 'Alabama'
+#state = 'WI'
+#state_long = 'Wisconsin'
+#ylpct = [0., 15.]
+#state = 'IA'
+#state_long = 'Iowa'
+state = 'AL'
+state_long = 'Alabama'
 #state = 'OR'
 #state_long = 'Oregon'
 #state = 'FL'
@@ -70,12 +72,19 @@ ylpct = [0., 15.]
 # TODO: Have to add all state data together for the covid tracker data
 #state = 'US'
 #state_long = 'US'
-
-#ylpct = [0., 100.]
+#state = 'TX'
+#state_long = 'Texas'
+#state = 'GA'
+#state_long = 'Georgia'
+#state = 'MN'
+#state_long = 'Minnesota'
+#state = 'CO'
+#state_long = 'Colorado'
+ylpct = [0., 30.]
 
 # Set files which we're loading from and set data dates for display
-data_filename = r'..\data\covid19_tracker\states-daily_20200424.csv'
-data_date = '24 April'
+data_filename = r'..\data\covid19_tracker\states-daily_20200504.csv'
+data_date = '04 May'
 
 #model_fname = r'..\data\ihme\2020_03_31.1\Hospitalization_all_locs.csv'
 #project_date = '31 March'
@@ -87,7 +96,8 @@ model_fname = r'..\data\ihme\2020_04_16.05\Hospitalization_all_locs.csv'
 project_date = '17 April'
 
 # When to stop the plotting
-stop_date = '20200430'
+start_date = '20200401'
+stop_date = '20200510'
 
 # Which plots to make
 plot_testing = True
@@ -98,6 +108,8 @@ today = date.today()
 data = get_data_ctrack(state, data_filename)
 
 dates = data['date']
+start_date_ind = list(dates).index(start_date)
+dates = dates[start_date_ind:]
 pos = data['positive']
 neg = data['negative']
 hosp = data['hospitalizedCurrently']
@@ -112,6 +124,17 @@ dhosp = np.diff(hosp, prepend = 0.)
 ddhosp = np.diff(dhosp, prepend = 0)
 ddeath = np.diff(death, prepend = 0)
 
+pos = pos[start_date_ind:]
+neg = neg[start_date_ind:]
+hosp = hosp[start_date_ind:]
+death = death[start_date_ind:]
+
+dpos = dpos[start_date_ind:]
+dneg = dneg[start_date_ind:]
+dhosp = dhosp[start_date_ind:]
+ddeath = ddeath[start_date_ind:]
+
+
 xticks = date_inds[::4]
 xticklabels = ['%s/%s' % (s[-3], s[-2:]) for s in dates[::4]]
 
@@ -120,7 +143,7 @@ data_ihme = get_data_ihme(model_fname)[state_long]
 dates_ihme = [format_date_ihme(s) for s in data_ihme['date']]
 
 # Trim to desired range
-start_ihme = dates_ihme.index(dates[0])
+start_ihme = dates_ihme.index(start_date)
 stop_ihme = dates_ihme.index(stop_date)
 dates_ihme = dates_ihme[start_ihme:stop_ihme]
 date_inds_ihme = range(len(dates_ihme))

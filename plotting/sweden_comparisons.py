@@ -145,7 +145,10 @@ country_pops = {'Denmark': 5.6,
                 'Spain': 47.,
                 'Sweden': 10.2,
                 'Germany': 83.02,
-                'Finland': 5.52}
+                'Finland': 5.52,
+                'US': 328.2,
+                'Belgium': 11.46,
+                'Canada': 37.59}
 
 state_pops = {'CA': 39.51,
               'TX': 28.99,
@@ -204,9 +207,9 @@ state_pops = {'CA': 39.51,
 datapath = r'..\data\COVID-19\csse_covid_19_data\csse_covid_19_time_series'
 dataname = 'time_series_covid19_deaths_global.csv'
 country_filename = os.path.join(datapath, dataname)
-state_filename = r'..\data\covid19_tracker\states-daily_20200424.csv'
-state_data_date = '24 April'
-country_data_date = '24 April'
+state_filename = r'..\data\covid19_tracker\states-daily_20200429.csv'
+state_data_date = '29 April'
+country_data_date = '1 May'
 n_death = 10
 
 
@@ -218,9 +221,9 @@ sweden.trim_to_first(n_death)
 
 # Make lists of countries, populations, and plot styles
 countries = ['Denmark', 'United Kingdom', 'Spain', 'Italy', 'Germany', 'Sweden']
-highlight_countries = {'Denmark': {'color': 'r', 'linestyle': '-'},
+highlight_countries = {'Canada': {'color': 'r', 'linestyle': '-'},
                     'United Kingdom': {'color': 'b', 'linestyle': '-'},
-                    'Spain': {'color': 'k', 'linestyle': '-'},
+                    'US': {'color': 'k', 'linestyle': '-.'},
                     'Italy': {'color': 'r', 'linestyle': '--'},
                     'Netherlands': {'color': 'b', 'linestyle': '--'},
                     'Sweden': {'color': 'k', 'linestyle': '--'}}
@@ -228,7 +231,7 @@ highlight_countries = {'Denmark': {'color': 'r', 'linestyle': '-'},
 # States to plot and their styles
 highlight_states = {'NY': {'color': 'r', 'linestyle': '-'},
                     'WA': {'color': 'b', 'linestyle': '-'},
-                    'AL': {'color': 'k', 'linestyle': '-'},
+                    'CA': {'color': 'k', 'linestyle': '-'},
                     'WI': {'color': 'r', 'linestyle': '--'},
                     'GA': {'color': 'b', 'linestyle': '--'},
                     'FL': {'color': 'k', 'linestyle': '--'}}
@@ -251,8 +254,8 @@ country_obj_dict = {s.name: s for s in country_objs}
 
 #%%
 
-xl = [0, 55]
-yl = [0, 800]
+xl = [0, 70]
+yl = [0, 1000]
 
 
 fig, ax = plt.subplots(1, 2, figsize = (12, 6))

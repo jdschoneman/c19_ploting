@@ -45,7 +45,10 @@ def foo(astr):
 def get_data_ctrack(state, fname):
     """
     Returns dictionary of all data for the Covid Tracking dataset. This function
-    applicable for data dated 4/2 and onwards. 
+    applicable for data dated 4/2 and onwards.
+    
+    If "state" argument is passed as None then a dictionary containing all
+    state data will be returned. 
     """
     
     # Get the headers
@@ -67,18 +70,34 @@ def get_data_ctrack(state, fname):
                                      skiprows = 1, usecols = (ind, ),
                                      unpack = True)
             
-    # Filter to state
-    state_inds = out['state'] == state
-    for key, val in out.items():
-        out[key] = np.flip(val[state_inds])
-    
     # List of items to convert to int
     convert_items = ['death', 'hospitalizedCurrently', 'hospitalized', 'positive', 'negative',
                      'inIcuCurrently', 'onVentilatorCurrently']
-    for item in convert_items:
-        out[item] = np.array([intfun(s) for s in out[item]])
-    
-    return out
+
+    # Filter to state, if a state is provided
+    if state is not None:
+        state_inds = out['state'] == state
+        for key, val in out.items():
+            out[key] = np.flip(val[state_inds])
+        
+        for item in convert_items:
+            out[item] = np.array([intfun(s) for s in out[item]])
+        
+        return out
+    else:
+        # Otherwise make a dictionary of state data
+        all_states = np.unique(out['state'])
+        all_out = dict()
+        for state in all_states:
+            state_inds = out['state'] == state
+            all_out[state] = dict()
+            for key, val in out.items():
+                all_out[state][key] = np.flip(val[state_inds])
+            
+            for item in convert_items:
+                all_out[state][item] = np.array([intfun(s) for s in all_out[state][item]])
+        
+        return all_out
 
 
 def get_data_c19(country, filename):
@@ -103,9 +122,12 @@ def get_data_c19(country, filename):
                                dtype = str)[4:]
     
     data_out = all_data[np.where(all_countries == country)[0], :]
-    keep_ind = np.argmax(data_out[:, -1])  # Full country will have highest count
-    
-    return data_out[keep_ind, :], dates_out
+    if country == 'Canada':
+        return np.sum(data_out, 0), dates_out        
+        
+    else:
+        keep_ind = np.argmax(data_out[:, -1])  # Full country will have highest count
+        return data_out[keep_ind, :], dates_out
 
 
 def get_data_ihme(fname):
